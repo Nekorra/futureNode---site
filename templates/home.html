@@ -70,7 +70,7 @@
       </div>
       <div class="card-body">
         <h4 class="card-title">Graph</h4>
-        <canvas id = "chart" width = "400" height = "400"></canvas>
+        <div id = "chart"></div>
       </div>
       <div class="card-footer text-muted">
         <div class="btn btn-warning btn-shadow px-3 my-2 ml-0 text-left">
@@ -125,66 +125,101 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   <script src = "https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-analytics.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-auth.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
   <script>
 
-    const ylabels = [];
+    const firebaseConfig = {
+      apiKey: "AIzaSyBYtzx3Pr2zAUbIGfcn1vs8yJpO9GrcAIY",
+      authDomain: "masalacomedyclub-2d11a.firebaseapp.com",
+      databaseURL: "https://masalacomedyclub-2d11a.firebaseio.com",
+      projectId: "masalacomedyclub-2d11a",
+      storageBucket: "masalacomedyclub-2d11a.appspot.com",
+      messagingSenderId: "83902325262",
+      appId: "1:83902325262:web:acdcbdf6f98798edc7525f",
+      measurementId: "G-KSW6820C2R"
+    };
 
-    chartIt();
 
-    async function chartIt() {
-      await getData();
-      const ctx = document.getElementById('chart').getContext('2d');
-      const myChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-              labels: ylabels,
-              datasets: [{
-                  label: 'prices',
-                  data: ylabels,
-                  backgroundColor: [
-                      'rgba(255, 99, 132, 0.2)',
-                      'rgba(54, 162, 235, 0.2)',
-                      'rgba(255, 206, 86, 0.2)',
-                      'rgba(75, 192, 192, 0.2)',
-                      'rgba(153, 102, 255, 0.2)',
-                      'rgba(255, 159, 64, 0.2)'
-                  ],
-                  borderColor: [
-                      'rgba(255, 99, 132, 1)',
-                      'rgba(54, 162, 235, 1)',
-                      'rgba(255, 206, 86, 1)',
-                      'rgba(75, 192, 192, 1)',
-                      'rgba(153, 102, 255, 1)',
-                      'rgba(255, 159, 64, 1)'
-                  ],
-                  borderWidth: 1
-              }]
-          },
-          
-      });
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+    database = firebase.database();
+    var ref = database.ref('testdata');
+    var interval = setInterval(function () {gotdata(); }, 10000)
+
+    Plotly.plot('chart',[{
+          y: [],
+          //x: ['4 min ago', '3 min ago', '2 min ago', '1 min ago', 'now'],
+          type: 'line'
+        }], {
+          yaxis: {
+            tickformat: ".4f"
+          }
+        });
+
+
+    function getdata(callback) {
+      
+      var finprice;
+      ref.once('value', function (dataSnapshot)  {
+        var finprice = dataSnapshot.val();
+        callback(finprice);
+      })
+      
     }
 
+    function gotdata() {
 
-      async function getData() {
-        const response = await fetch('static/bit2.csv');
-        const data = await response.text();
+      getdata(function(finprice){
+        console.log(finprice);
 
-        const rows = data.split('\n').slice(1);
-        for (var i = 0; i < 5; i++) {
-
-        }
-        rows.forEach(elt => {
-          const row = elt.split(',');
-          const price = row[0];
-          ylabels.push(price)
+        var keys = Object.keys(finprice);
+        console.log(keys);
+        for (var i = 0; i < keys.length; i++) {
+          var k = keys[i];
+          var price = finprice[k].LatestPrice;
           console.log(price);
 
-        });
-        console.log(ylabels);
+          
+
+        }
+
+        Plotly.extendTraces('chart', { y:[[price]]}, [0]);
+
+      })
+
+    }
+    
+
+   /*
+    ref.once('value', gotData);
+
+    function gotData(data){
+       
+      //console.log(data.val());
+      var price = data.val();
+      var keys = Object.keys(price);
+      console.log(keys);
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var prices = price[k].LatestPrice;
+        temp.push(prices);
+        console.log(prices);
+        
+      }
 
       }
+      */
+
+    
+
 
   </script>
 
   </body>
+
 </html>
